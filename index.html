@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中医药方闯关小游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+        }
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        body {
+            background: linear-gradient(135deg, #e6f7f0 0%, #d1e7dd 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            color: #333;
+        }
+        .game-container {
+            background: #fff;
+            width: 90%;
+            max-width: 900px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin: 0 auto;
+        }
+        .header {
+            background: #2c7a57;
+            color: #fff;
+            text-align: center;
+            padding: 24px 20px;
+        }
+        .header h1 {
+            margin-bottom: 8px;
+            font-size: 26px;
+        }
+        .header-tip {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .game-panel {
+            padding: 24px;
+        }
+        /* 分屏切换 */
+        .screen {
+            display: none;
+        }
+        .screen.active {
+            display: block;
+        }
+        /* 欢迎页 */
+        .welcome-box {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .welcome-box h2 {
+            color: #2c7a57;
+            margin-bottom: 20px;
+        }
+        .rule-list {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 10px;
+            text-align: left;
+            margin: 20px 0;
+            line-height: 1.8;
+        }
+        /* 按钮样式 */
+        .btn {
+            padding: 10px 24px;
+            background: #2c7a57;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            margin: 10px 5px;
+            transition: background 0.3s;
+            -webkit-appearance: none;
+        }
+        .btn:hover {
+            background: #236648;
+        }
+        .btn:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+        /* 关卡通用样式 */
+        .level-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e9ecef;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .level-title {
+            color: #2c7a57;
+            font-size: 20px;
+        }
+        .game-info {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .time {
+            color: #dc3545;
+        }
+        .score {
+            color: #2c7a57;
+        }
+        .question-item {
+            margin: 20px 0;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .question-text {
+            font-weight: bold;
+            margin-bottom: 12px;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        .analysis {
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: #e9ecef;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #555;
+            line-height: 1.6;
+        }
+        /* 单选选项 */
+        .option {
+            padding: 10px 14px;
+            margin: 8px 0;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .option:hover {
+            background: #e6f7f0;
+            border-color: #2c7a57;
+        }
+        .option.correct {
+            background: #d1e7dd;
+            border-color: #2c7a57;
+        }
+        .option.wrong {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+        /* 填空样式 */
+        .fill-input {
+            padding: 8px 12px;
+            width: 120px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin: 0 8px;
+            -webkit-appearance: none;
+        }
+        .fill-ans {
+            color: #666;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        /* 配对样式 */
+        .pair-wrap {
+            display: flex;
+            gap: 24px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .pair-col {
+            flex: 1;
+            min-width: 280px;
+        }
+        .pair-col h4 {
+            background: #2c7a57;
+            color: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        .pair-item {
+            padding: 8px 12px;
+            margin: 6px 0;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .pair-item:hover {
+            background: #e6f7f0;
+            border-color: #2c7a57;
+        }
+        .pair-item.selected {
+            background: #d1e7dd;
+            border-color: #2c7a57;
+        }
+        .pair-item.matched {
+            background: #d1e7dd;
+            border-color: #2c7a57;
+            opacity: 0.7;
+        }
+        /* 结果页 */
+        .result-box {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .result-box h2 {
+            color: #2c7a57;
+            margin-bottom: 20px;
+        }
+        .total-score {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2c7a57;
+            margin: 20px 0;
+        }
+        .rank {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>中医药方闯关小游戏</h1>
+            <p class="header-tip">🍎 Mac/Windows 通用，浏览器直接运行</p>
+        </div>
+        <div class="game-panel">
+            <!-- 欢迎页 -->
+            <div class="screen active" id="welcome-screen">
+                <div class="welcome-box">
+                    <h2>欢迎来到中医药方闯关</h2>
+                    <div class="rule-list">
+                        <p>📌 游戏规则：共3关（单选+填空+配对），每题10分，满分300分</p>
+                        <p>⏱️ 每关限时10分钟，超时闯关失败</p>
+                        <p>💡 答对得分、答错查看解析，通关后查看总得分与评级</p>
+                    </div>
+                    <button class="btn" onclick="startGame()">开始闯关</button>
+                </div>
+            </div>
+
+            <!-- 第一关：单选（10个方剂基础题） -->
+            <div class="screen" id="level1">
+                <div class="level-head">
+                    <h3 class="level-title">第一关：单选闯关（基础巩固）</h3>
+                    <div class="game-info">
+                        <span class="time" id="time1">剩余：10:00</span>
+                        <span class="score" id="score1">得分：0</span>
+                    </div>
+                </div>
+                <div id="q1-list">
+                    <div class="question-item">
+                        <p class="question-text">1. 补气基础方，主治脾胃气虚的是？</p>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">A. 四物汤</div>
+                        <div class="option" data-correct="true" onclick="checkAnswer(this, true)">B. 四君子汤</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">C. 六味地黄丸</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">D. 归脾汤</div>
+                        <div class="analysis">解析：四君子汤为补气基础方，组成人参、白术、茯苓、炙甘草，专攻脾胃气虚</div>
+                    </div>
+                    <div class="question-item">
+                        <p class="question-text">2. 补血基础方，用于血虚、月经不调的是？</p>
+                        <div class="option" data-correct="true" onclick="checkAnswer(this, true)">A. 四物汤</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">B. 四君子汤</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">C. 白虎汤</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">D. 五苓散</div>
+                        <div class="analysis">解析：四物汤为补血基础方，由当归、川芎、白芍、熟地黄组成</div>
+                    </div>
+                    <div class="question-item">
+                        <p class="question-text">3. 滋阴补肾，治疗肾阴不足的代表方是？</p>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">A. 补中益气汤</div>
+                        <div class="option" data-correct="true" onclick="checkAnswer(this, true)">B. 六味地黄丸</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">C. 小柴胡汤</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">D. 麻黄汤</div>
+                        <div class="analysis">解析：六味地黄丸三补三泻，滋阴补肾，主治腰膝酸软、潮热盗汗</div>
+                    </div>
+                    <div class="question-item">
+                        <p class="question-text">4. 补中益气、升阳举陷，用于气虚下陷的是？</p>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">A. 归脾汤</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">B. 四物汤</div>
+                        <div class="option" data-correct="true" onclick="checkAnswer(this, true)">C. 补中益气汤</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">D. 桂枝汤</div>
+                        <div class="analysis">解析：补中益气汤以黄芪为君，补气升阳，改善气虚下陷</div>
+                    </div>
+                    <div class="question-item">
+                        <p class="question-text">5. 益气补血、健脾养心，用于心脾两虚的是？</p>
+                        <div class="option" data-correct="true" onclick="checkAnswer(this, true)">A. 归脾汤</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">B. 四君子汤</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">C. 五苓散</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">D. 白虎汤</div>
+                        <div class="analysis">解析：归脾汤兼顾益气补血与健脾养心，缓解心悸失眠、健忘</div>
+                    </div>
+                    <div class="question-item">
+                        <p class="question-text">6. 发汗解表、宣肺平喘，主治风寒表实证的是？</p>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">A. 桂枝汤</div>
+                        <div class="option" data-correct="true" onclick="checkAnswer(this, true)">B. 麻黄汤</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">C. 小柴胡汤</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">D. 白虎汤</div>
+                        <div class="analysis">解析：麻黄汤解表散寒，主治风寒表实证，无汗而喘</div>
+                    </div>
+                    <div class="question-item">
+                        <p class="question-text">7. 解肌发表、调和营卫，主治风寒表虚有汗的是？</p>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">A. 麻黄汤</div>
+                        <div class="option" data-correct="true" onclick="checkAnswer(this, true)">B. 桂枝汤</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">C. 五苓散</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">D. 四物汤</div>
+                        <div class="analysis">解析：桂枝汤调和营卫，主治风寒表虚证，汗出恶风</div>
+                    </div>
+                    <div class="question-item">
+                        <p class="question-text">8. 和解少阳，主治寒热往来、胸胁苦满的是？</p>
+                        <div class="option" data-correct="true" onclick="checkAnswer(this, true)">A. 小柴胡汤</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">B. 补中益气汤</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">C. 归脾汤</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">D. 六味地黄丸</div>
+                        <div class="analysis">解析：小柴胡汤和解少阳，专治寒热往来、胸胁苦满</div>
+                    </div>
+                    <div class="question-item">
+                        <p class="question-text">9. 清热生津，主治大热、大汗、大渴、脉洪大的是？</p>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">A. 五苓散</div>
+                        <div class="option" data-correct="true" onclick="checkAnswer(this, true)">B. 白虎汤</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">C. 四君子汤</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">D. 麻黄汤</div>
+                        <div class="analysis">解析：白虎汤清气分热，对应阳明热盛四大症</div>
+                    </div>
+                    <div class="question-item">
+                        <p class="question-text">10. 利水渗湿、温阳化气，主治小便不利、水肿的是？</p>
+                        <div class="option" data-correct="true" onclick="checkAnswer(this, true)">A. 五苓散</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">B. 四物汤</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">C. 归脾汤</div>
+                        <div class="option" data-correct="false" onclick="checkAnswer(this, false)">D. 小柴胡汤</div>
+                        <div class="analysis">解析：五苓散利水渗湿、温阳化气，改善水肿、小便不利</div>
+                    </div>
+                </div>
+                <button class="btn" onclick="goLevel2()">进入第二关</button>
+            </div>
+
+            <!-- 第二关：填空（方剂组成记忆） -->
+            <div class="screen" id="level2">
+                <div class="level-head">
+                    <h3 class="level-title">第二关：填空闯关（记忆强化）</h3>
+                    <div class="game-info">
+                        <span class="time" id="time2">剩余：10:00</span>
+                        <span class="score" id="score2">得分：0</span>
+                    </div>
+                </div>
+                <div id="q2-list">
+                    <div class="question-item">
+                        <p class="question-text">1. 四君子汤：人参、白术、茯苓、<input type="text" class="fill-input" placeholder="输入答案" data-ans="炙甘草"><span class="fill-ans">（答案：炙甘草）</span></p>
+                        <div class="analysis">解析：炙甘草调和诸药，强化益气健脾功效</div>
+                    </div>
+                    <div class="question-item">
+                        <p class="question-text">2. 四物汤：当归、川芎、白芍、<input type="text" class="fill-input" placeholder="输入答案" data-ans="熟地黄"><span class="fill-ans">（答案：熟地黄）</span></p>
+                        <div class="analysis">解析：熟地黄为君药，专攻补血滋阴</div>
+                    </div>
+                    <div class="question-item">
+                        <p class="question-text">3. 六味地黄丸：熟地黄、山茱萸、山药、泽泻、牡丹皮、<input type="text" class="fill-input" placeholder="输入答案" data-ans="茯苓"><span class="fill-ans">（答案：茯苓）</span></p>
+                        <div class="analysis">解析：茯苓利水渗湿，避免全方滋腻</div>
+                    </div>
+                    <div class="question-item">
+                        <p class="question-text">4. 补中益气汤以<input type="text" class="fill-input" placeholder="输入答案" data-ans="黄芪">为君药，重在补气升阳。<span class="fill-ans">（答案：黄芪）</span></p>
+                        <div class="analysis">解析：黄芪用量最大，大补脾胃之气</div>
+                    </div>
+                    <div class="question-item">
+                        <p class="question-text">5. 归脾汤主治<input type="text" class="fill-input" placeholder="输入答案" data-ans="心脾">两虚，心悸失眠。<span class="fill-ans">（答案：心脾）</span></p>
+                        <div class="analysis">解析：归脾汤调理心脾两虚，养心安神</div>
+                    </div>
+                    <div class="question-item">
+                        <p class="question-text">6. 麻黄汤主治风寒表<input type="text" class="fill-input" placeholder="输入答案" data-ans="实">证。<span class="fill-ans">（答案：实）</span></p>
+                        <div class="analysis">解析：风寒表实证核心特征为无汗</div>
+                    </div>
+                    <div class="question-item">
+                        <p class="question-text">7. 桂枝汤主治风寒表<input type="text" class="fill-input" placeholder="输入答案" data-ans="虚">证。<span class="fill-ans">（答案：虚）</span></p>
+                        <div class="analysis">解析：风寒表虚证核心特征为有汗</div>
+                    </div>
+                    <div class="question-item">
+                        <p class="question-text">8. 小柴胡汤功效：<input type="text" class="fill-input" placeholder="输入答案" data-ans="和解">少阳。<span class="fill-ans">（答案：和解）</span></p>
+                        <div class="analysis">解析：和解少阳是小柴胡汤专属功效</div>
+                    </div>
+                    <div class="question-item">
+                        <p class="question-text">9. 白虎汤四大症：大热、大汗、大渴、<input type="text" class="fill-input" placeholder="输入答案" data-ans="脉洪大">。<span class="fill-ans">（答案：脉洪大）</span></p>
+                        <div class="analysis">解析：脉洪大是阳明热盛典型脉象</div>
+                    </div>
+                    <div class="question-item">
+                        <p class="question-text">10. 五苓散功效：利水渗湿，<input type="text" class="fill-input" placeholder="输入答案" data-ans="温阳">化气。<span class="fill-ans">（答案：温阳）</span></p>
+                        <div class="analysis">解析：温阳化气扶助阳气，助力水液运化</div>
+                    </div>
+                </div>
+                <button class="btn" onclick="checkFill()">检查答案</button>
+                <button class="btn" onclick="goLevel3()">进入第三关</button>
+            </div>
+
+            <!-- 第三关：配对（功效-方剂匹配） -->
+            <div class="screen" id="level3">
+                <div class="level-head">
+                    <h3 class="level-title">第三关：配对闯关（综合应用）</h3>
+                    <div class="game-info">
+                        <span class="time" id="time3">剩余：10:00</span>
+                        <span class="score" id="score3">得分：0</span>
+                    </div>
+                </div>
+                <p>点击左侧功效，再点击右侧方剂完成配对，全部配对成功即可通关</p>
+                <div class="pair-wrap">
+                    <div class="pair-col">
+                        <h4>功效/主治</h4>
+                        <div class="pair-item" data-id="1" onclick="selectLeft(1)">1. 补气基础，脾胃气虚</div>
+                        <div class="pair-item" data-id="2" onclick="selectLeft(2)">2. 补血基础，血虚月经不调</div>
+                        <div class="pair-item" data-id="3" onclick="selectLeft(3)">3. 滋阴补肾</div>
+                        <div class="pair-item" data-id="4" onclick="selectLeft(4)">4. 补中益气，升阳举陷</div>
+                        <div class="pair-item" data-id="5" onclick="selectLeft(5)">5. 益气补血，健脾养心</div>
+                        <div class="pair-item" data-id="6" onclick="selectLeft(6)">6. 发汗解表，宣肺平喘</div>
+                        <div class="pair-item" data-id="7" onclick="selectLeft(7)">7. 解肌发表，调和营卫</div>
+                        <div class="pair-item" data-id="8" onclick="selectLeft(8)">8. 和解少阳</div>
+                        <div class="pair-item" data-id="9" onclick="selectLeft(9)">9. 清热生津</div>
+                        <div class="pair-item" data-id="10" onclick="selectLeft(10)">10. 利水渗湿，温阳化气</div>
+                    </div>
+                    <div class="pair-col">
+                        <h4>方剂</h4>
+                        <div class="pair-item" data-id="A" onclick="selectRight('A')">A. 四君子汤</div>
+                        <div class="pair-item" data-id="B" onclick="selectRight('B')">B. 四物汤</div>
+                        <div class="pair-item" data-id="C" onclick="selectRight('C')">C. 六味地黄丸</div>
+                        <div class="pair-item" data-id="D" onclick="selectRight('D')">D. 补中益气汤</div>
+                        <div class="pair-item" data-id="E" onclick="selectRight('E')">E. 归脾汤</div>
+                        <div class="pair-item" data-id="F" onclick="selectRight('F')">F. 麻黄汤</div>
+                        <div class="pair-item" data-id="G" onclick="selectRight('G')">G. 桂枝汤</div>
+                        <div class="pair-item" data-id="H" onclick="selectRight('H')">H. 小柴胡汤</div>
+                        <div class="pair-item" data-id="I" onclick="selectRight('I')">I. 白虎汤</div>
+                        <div class="pair-item" data-id="J" onclick="selectRight('J')">J. 五苓散</div>
+                    </div>
+                </div>
+                <div class="analysis">✅ 标准配对：1-A、2-B、3-C、4-D、5-E、6-F、7-G、8-H、9-I、10-J</div>
+                <button class="btn" onclick="showResult()">完成闯关</button>
+            </div>
+
+            <!-- 结果页 -->
+            <div class="screen" id="result-screen">
+                <div class="result-box">
+                    <h2>🎉 闯关完成！</h2>
+                    <div class="total-score" id="total-score">总得分：0/300</div>
+                    <div class="rank" id="rank"></div>
+                    <p>📊 评级参考：270-300分=中药小达人｜210-260分=基础扎实｜150-200分=需加强｜&lt;150分=建议重玩</p>
+                    <button class="btn" onclick="restart()">重新闯关</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let totalScore = 0;
+        let timer;
+        let selectedLeft = null;
+        const matchMap = {1:'A',2:'B',3:'C',4:'D',5:'E',6:'F',7:'G',8:'H',9:'I',10:'J'};
+
+        // 开始游戏
+        function startGame() {
+            hideAll();
+            document.getElementById('level1').classList.add('active');
+            startTimer(1, 600); // 10分钟倒计时
+        }
+
+        // 计时器功能
+        function startTimer(level, seconds) {
+            let time = seconds;
+            timer = setInterval(()=>{
+                time--;
+                let min = Math.floor(time/60);
+                let sec = time%60;
+                sec = sec<10 ? '0'+sec : sec;
+                document.getElementById(`time${level}`).textContent = `剩余：${min}:${sec}`;
+                if(time<=0) {
+                    clearInterval(timer);
+                    alert('超时啦，闯关失败！');
+                    restart();
+                }
+            },1000);
+        }
+
+        // 单选题答题逻辑
+        function checkAnswer(el, isCorrect) {
+            // 禁用所有选项点击
+            const siblings = Array.from(el.parentElement.children).filter(item=>item.classList.contains('option'));
+            siblings.forEach(item=>{
+                item.style.pointerEvents = 'none';
+                // 标记正确/错误选项
+                item.classList.remove('correct','wrong');
+                if(item.dataset.correct === 'true') item.classList.add('correct');
+                else item.classList.add('wrong');
+            });
+            // 答对加分
+            if(isCorrect) totalScore +=10;
+            updateScore();
+        }
+
+        // 填空题检查逻辑
+        function checkFill() {
+            const inputs = document.querySelectorAll('.fill-input');
+            inputs.forEach(input=>{
+                input.disabled = true;
+                // 验证答案
+                if(input.value.trim() === input.dataset.ans) {
+                    input.style.borderColor = '#2c7a57';
+                    totalScore +=10;
+                } else {
+                    input.style.borderColor = '#dc3545';
+                }
+            });
+            updateScore();
+        }
+
+        // 配对题左侧选择
+        function selectLeft(id) {
+            document.querySelectorAll('.pair-col:first-child .pair-item').forEach(item=>item.classList.remove('selected'));
+            event.target.classList.add('selected');
+            selectedLeft = id;
+        }
+
+        // 配对题右侧选择
+        function selectRight(id) {
+            if(!selectedLeft) return alert('请先选择左侧功效');
+            // 验证配对是否正确
+            if(matchMap[selectedLeft] === id) {
+                event.target.classList.add('matched');
+                document.querySelector(`.pair-col:first-child [data-id="${selectedLeft}"]`).classList.add('matched');
+                totalScore +=10;
+                updateScore();
+            } else {
+                alert('配对错误，请重试');
+            }
+            // 清空选中状态
+            document.querySelectorAll('.pair-item').forEach(item=>item.classList.remove('selected'));
+            selectedLeft = null;
+        }
+
+        // 切换到第二关
+        function goLevel2() {
+            clearInterval(timer);
+            hideAll();
+            document.getElementById('level2').classList.add('active');
+            startTimer(2,600);
+        }
+
+        // 切换到第三关
+        function goLevel3() {
+            clearInterval(timer);
+            hideAll();
+            document.getElementById('level3').classList.add('active');
+            startTimer(3,600);
+        }
+
+        // 更新得分显示
+        function updateScore() {
+            if(document.getElementById('score1')) document.getElementById('score1').textContent = `得分：${totalScore}`;
+            if(document.getElementById('score2')) document.getElementById('score2').textContent = `得分：${totalScore}`;
+            if(document.getElementById('score3')) document.getElementById('score3').textContent = `得分：${totalScore}`;
+        }
+
+        // 显示闯关结果
+        function showResult() {
+            clearInterval(timer);
+            hideAll();
+            document.getElementById('result-screen').classList.add('active');
+            document.getElementById('total-score').textContent = `总得分：${totalScore}/300`;
+            
+            // 评级逻辑
+            let rank = '';
+            if(totalScore>=270) rank='🏆 中药小达人';
+            else if(totalScore>=210) rank='✅ 基础扎实';
+            else if(totalScore>=150) rank='⚠️ 需加强记忆';
+            else rank='❌ 建议重新闯关';
+            document.getElementById('rank').textContent = rank;
+        }
+
+        // 隐藏所有屏幕
+        function hideAll() {
+            document.querySelectorAll('.screen').forEach(item=>item.classList.remove('active'));
+        }
+
+        // 重新开始游戏
+        function restart() {
+            clearInterval(timer);
+            totalScore=0;
+            selectedLeft=null;
+            hideAll();
+            document.getElementById('welcome-screen').classList.add('active');
+            // 刷新页面重置所有状态
+            window.location.reload();
+        }
+    </script>
+</body>
+</html>
